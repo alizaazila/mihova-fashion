@@ -6,7 +6,9 @@ import { StyleQuiz } from './components/StyleQuiz';
 import { OutfitStudio } from './components/OutfitStudio';
 import { AIRecommendations } from './components/AIRecommendations';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { VisualRecommendations } from './components/VisualRecommendations';
 import { initializeAnalytics } from './utils/wardrobe-analytics';
+import { userProfile } from './utils/userProfile';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -51,15 +53,27 @@ function App() {
         </h1>
 
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {['home', 'wardrobe', 'outfit', 'quiz', 'recommendations', 'analytics'].map(page => (
-            <button 
-              key={page}
-              onClick={() => setCurrentPage(page)} 
-              style={navButtonStyle(currentPage === page)}
-            >
-              {getPageLabel(page)}
-            </button>
-          ))}
+          <button onClick={() => setCurrentPage('home')} style={navButtonStyle(currentPage === 'home')}>
+            🏠 Home
+          </button>
+          <button onClick={() => setCurrentPage('wardrobe')} style={navButtonStyle(currentPage === 'wardrobe')}>
+            👗 Wardrobe
+          </button>
+          <button onClick={() => setCurrentPage('outfit')} style={navButtonStyle(currentPage === 'outfit')}>
+            ✨ Outfit Studio
+          </button>
+          <button onClick={() => setCurrentPage('quiz')} style={navButtonStyle(currentPage === 'quiz')}>
+            🎯 Style Quiz
+          </button>
+          <button onClick={() => setCurrentPage('recommendations')} style={navButtonStyle(currentPage === 'recommendations')}>
+            🤖 AI Recommends
+          </button>
+          <button onClick={() => setCurrentPage('visual')} style={navButtonStyle(currentPage === 'visual')}>
+            👗 Visual Guide
+          </button>
+          <button onClick={() => setCurrentPage('analytics')} style={navButtonStyle(currentPage === 'analytics')}>
+            📊 Analytics
+          </button>
         </div>
       </nav>
 
@@ -75,6 +89,7 @@ function App() {
           {currentPage === 'outfit' && <OutfitStudioPage />}
           {currentPage === 'quiz' && <StyleQuiz />}
           {currentPage === 'recommendations' && <AIRecommendations styleDNA={styleDNA} wardrobe={wardrobe} />}
+          {currentPage === 'visual' && <VisualRecommendations styleDNA={styleDNA} wardrobe={wardrobe} />}
           {currentPage === 'analytics' && <AnalyticsDashboard analytics={analytics} wardrobe={wardrobe} />}
         </div>
       </div>
@@ -97,18 +112,6 @@ function navButtonStyle(isActive) {
     textTransform: 'capitalize',
     boxShadow: isActive ? theme.shadows.medium : 'none',
   };
-}
-
-function getPageLabel(page) {
-  const labels = {
-    home: '🏠 Home',
-    wardrobe: '👗 Wardrobe',
-    outfit: '✨ Outfit Studio',
-    quiz: '🎯 Style Quiz',
-    recommendations: '🤖 AI Recommends',
-    analytics: '📊 Analytics'
-  };
-  return labels[page] || page;
 }
 
 function HomePage() {
@@ -150,14 +153,6 @@ function HomePage() {
         borderRadius: '12px',
         boxShadow: theme.shadows.medium,
         transition: 'all 0.3s ease'
-      }}
-      onMouseOver={(e) => {
-        e.target.style.transform = 'translateY(-3px)';
-        e.target.style.boxShadow = theme.shadows.dark;
-      }}
-      onMouseOut={(e) => {
-        e.target.style.transform = 'translateY(0)';
-        e.target.style.boxShadow = theme.shadows.medium;
       }}>
         Start Styling →
       </button>

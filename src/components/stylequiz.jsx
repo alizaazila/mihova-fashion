@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { theme } from '../styles/theme';
+import { userProfile } from '../utils/userProfile';
 
 export function StyleQuiz() {
   const [currentStep, setCurrentStep] = useState('start');
@@ -63,6 +64,7 @@ export function StyleQuiz() {
 
   const calculateStyleDNA = () => {
     const styleScores = { classic: 0, minimalist: 0, bold: 0, bohemian: 0 };
+    
     const answerMap = {
       'Classic & Timeless': 'classic',
       'Modern & Minimalist': 'minimalist',
@@ -95,7 +97,13 @@ export function StyleQuiz() {
       styleScores[a] > styleScores[b] ? a : b
     );
 
-    setStyleDNA(styleTypes[dominantStyle]);
+    const styleName = styleTypes[dominantStyle];
+    
+    // SAVE TO PROFILE
+    userProfile.updateStyleDNA(dominantStyle, styleName.name);
+    console.log('Profile saved:', userProfile.getProfile());
+    
+    setStyleDNA(styleName);
     setCurrentStep('result');
   };
 
@@ -192,10 +200,7 @@ export function StyleQuiz() {
           </div>
 
           {quizQuestions.map((q, index) => (
-            <div key={q.id} style={{
-              marginBottom: '40px',
-              animation: 'fadeIn 0.3s ease'
-            }}>
+            <div key={q.id} style={{ marginBottom: '40px' }}>
               <div style={{
                 background: theme.gradients.card,
                 padding: '30px',
@@ -312,12 +317,7 @@ export function StyleQuiz() {
             boxShadow: theme.shadows.dark,
             textAlign: 'center'
           }}>
-            <div style={{
-              fontSize: '60px',
-              marginBottom: '20px'
-            }}>
-              ✨
-            </div>
+            <div style={{ fontSize: '60px', marginBottom: '20px' }}>✨</div>
 
             <h2 style={{
               fontFamily: theme.fonts.heading,
