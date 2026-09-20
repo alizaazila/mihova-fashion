@@ -21,6 +21,20 @@ function App() {
     { id: 4, name: 'Black Heels', type: 'shoes', color: '#1a1a1a' },
   ]);
 
+  const navButtonStyle = (isActive) => ({
+    backgroundColor: isActive ? theme.colors.accent : 'transparent',
+    color: isActive ? theme.colors.primary : theme.colors.accent,
+    border: isActive ? 'none' : `2px solid ${theme.colors.accent}`,
+    padding: '10px 20px',
+    cursor: 'pointer',
+    fontFamily: theme.fonts.heading,
+    fontWeight: 'bold',
+    borderRadius: '8px',
+    transition: 'all 0.3s ease',
+    fontSize: '13px',
+    boxShadow: isActive ? theme.shadows.medium : 'none',
+  });
+
   return (
     <div style={{ 
       fontFamily: theme.fonts.body,
@@ -83,13 +97,46 @@ function App() {
   );
 }
 
-function navButtonStyle(isActive) {
-  return {
-    backgroundColor: isActive ? theme.colors.accent : 'transparent',
-    color: isActive ? theme.colors.primary : theme.colors.accent,
-    border: isActive ? 'none' : `2px solid ${theme.colors.accent}`,
-    padding: '10px 20px',
-    cursor: 'pointer',
-    fontFamily: theme.fonts.heading,
-    fontWeight: 'bold',
-    borderRadius: '8px',
+function HomePage() {
+  return (
+    <div style={{ 
+      textAlign: 'center',
+      background: theme.gradients.card,
+      padding: '80px 40px',
+      borderRadius: '20px',
+      boxShadow: theme.shadows.dark
+    }}>
+      <h2 style={{ 
+        fontFamily: theme.fonts.heading, 
+        color: theme.colors.primary, 
+        fontSize: '56px',
+        marginBottom: '15px'
+      }}>
+        Confidence Starts with What You Wear
+      </h2>
+      <p style={{ 
+        fontSize: '20px', 
+        color: theme.colors.textLight,
+        marginBottom: '30px'
+      }}>
+        Your personal AI style assistant. Discover outfits. Understand your wardrobe. Wear better.
+      </p>
+      <button style={{
+        backgroundColor: theme.colors.accent,
+        color: theme.colors.primary,
+        padding: '18px 50px',
+        fontSize: '18px',
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: theme.fonts.heading,
+        fontWeight: 'bold',
+        borderRadius: '12px',
+        boxShadow: theme.shadows.medium,
+      }}>
+        Start Styling →
+      </button>
+    </div>
+  );
+}
+
+export default App;
