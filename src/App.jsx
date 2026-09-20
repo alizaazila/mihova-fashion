@@ -22,10 +22,87 @@ const SHADOWS = {
   dark: '0 8px 24px rgba(45, 27, 61, 0.2)'
 };
 
+// Claude API Function
+async function analyzeOutfit(items, apiKey) {
+  if (!apiKey || apiKey.trim() === '') {
+    return {
+      score: 8,
+      analysis: "Demo analysis: This is a well-balanced outfit combination.",
+      suggestion: "Try adding an accessory to complete the look!",
+      isDemo: true
+    };
+  }
+
+  const itemNames = items.map(item => `${item.name} (${item.type})`).join(', ');
+  
+  const prompt = `You are a professional fashion stylist. Analyze this outfit and provide:
+1. A style score (1-10)
+2. Brief analysis (1-2 sentences)
+3. One styling suggestion
+
+Outfit: ${itemNames}
+
+Respond in this exact format:
+SCORE: [number]
+ANALYSIS: [text]
+SUGGESTION: [text]`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-1',
+        max_tokens: 300,
+        messages: [
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      console.error('API Error:', response.status);
+      return {
+        score: 8,
+        analysis: "Demo analysis: Outfit looks great!",
+        suggestion: "Keep exploring different combinations!",
+        isDemo: true
+      };
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text;
+    
+    const scoreMatch = text.match(/SCORE:\s*(\d+)/);
+    const analysisMatch = text.match(/ANALYSIS:\s*([^\n]+)/);
+    const suggestionMatch = text.match(/SUGGESTION:\s*([^\n]+)/);
+
+    return {
+      score: scoreMatch ? parseInt(scoreMatch[1]) : 8,
+      analysis: analysisMatch ? analysisMatch[1].trim() : "Great outfit choice!",
+      suggestion: suggestionMatch ? suggestionMatch[1].trim() : "Perfect look!",
+      isDemo: false
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      score: 8,
+      analysis: "Demo: Cloud connectivity issue. Using fallback analysis.",
+      suggestion: "Your outfit looks stylish!",
+      isDemo: true
+    };
+  }
+}
+
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [wardrobe, setWardrobe] = useState([]);
   const [styleDNA, setStyleDNA] = useState(null);
+  const [claudeKey, setClaudeKey] = useState(localStorage.getItem('mihova_claude_key') || '');
 
   // Load wardrobe from localStorage on mount
   useEffect(() => {
@@ -104,7 +181,7 @@ function App() {
           {currentPage === 'wardrobe' && <WardrobePage wardrobe={wardrobe} onAddItem={addItem} onRemoveItem={removeItem} />}
           {currentPage === 'quiz' && <QuizPage onSetStyleDNA={setStyleDNA} />}
           {currentPage === 'outfit' && <OutfitPage wardrobe={wardrobe} />}
-          {currentPage === 'ai' && <AIPage wardrobe={wardrobe} styleDNA={styleDNA} />}
+          {currentPage === 'ai' && <AIPage wardrobe={wardrobe} styleDNA={styleDNA} claudeKey={claudeKey} setClaudeKey={setClaudeKey} />}
           {currentPage === 'analytics' && <AnalyticsPage wardrobe={wardrobe} />}
         </div>
       </div>
@@ -126,7 +203,7 @@ function HomePage() {
         Confidence Starts with What You Wear
       </h1>
       <p style={{ fontSize: '18px', color: COLORS.textLight, marginBottom: '40px', maxWidth: '700px', margin: '20px auto 40px' }}>
-        Your personal AI style assistant. Add your wardrobe, take a style quiz, create outfits, and get AI recommendations.
+        Your personal AI style assistant. Add your wardrobe, take a style quiz, create outfits, and get AI recommendations powered by Claude.
       </p>
       <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button style={{
@@ -179,15 +256,9 @@ function WardrobePage({ wardrobe, onAddItem, onRemoveItem }) {
     }
   };
 
-  const itemsByType = {};
-  wardrobe.forEach(item => {
-    if (!itemsByType[item.type]) itemsByType[item.type] = [];
-    itemsByType[item.type].push(item);
-  });
-
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ fontFamily: '"Cormorant Garamond", serif', color: COLORS.white, fontSize: '42px', margin: 0 }}>👗 Wardrobe Manager</h1>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -648,30 +719,276 @@ function OutfitPage({ wardrobe }) {
 }
 
 // ========== AI PAGE ==========
-function AIPage({ wardrobe, styleDNA }) {
+function AIPage({ wardrobe, styleDNA, claudeKey, setClaudeKey }) {
+  const [showKeyForm, setShowKeyForm] = useState(!claudeKey);
+  const [testKey, setTestKey] = useState('');
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSaveKey = () => {
+    if (testKey.trim()) {
+      setClaudeKey(testKey);
+      localStorage.setItem('mihova_claude_key', testKey);
+      setShowKeyForm(false);
+      setTestKey('');
+    }
+  };
+
+  const generateRecommendations = async () => {
+    if (wardrobe.length < 3) {
+      alert('Add at least 3 items to your wardrobe first!');
+      return;
+    }
+
+    setLoading(true);
+    const recs = [];
+
+    for (let i = 0; i < 3; i++) {
+      const top = wardrobe.find(item => item.type === 'top');
+      const bottom = wardrobe.find(item => item.type === 'bottom');
+      const shoes = wardrobe.find(item => item.type === 'shoes');
+
+      if (top && bottom && shoes) {
+        const analysis = await analyzeOutfit([top, bottom, shoes], claudeKey);
+        recs.push({
+          id: Date.now() + i,
+          items: [top, bottom, shoes],
+          ...analysis
+        });
+      }
+    }
+
+    setRecommendations(recs);
+    setLoading(false);
+  };
+
   return (
-    <div style={{
-      background: GRADIENTS.card,
-      padding: '40px',
-      borderRadius: '15px',
-      boxShadow: SHADOWS.medium,
-      textAlign: 'center'
-    }}>
-      <h2 style={{ fontFamily: '"Cormorant Garamond", serif', color: COLORS.primary, fontSize: '42px' }}>
-        🤖 AI Recommendations
-      </h2>
-      <p style={{ color: COLORS.textLight, fontSize: '16px', marginBottom: '30px' }}>
-        Coming Soon: Claude AI will analyze your wardrobe and generate personalized outfit recommendations!
-      </p>
-      {wardrobe.length === 0 && (
-        <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>
-          👗 Add items to your wardrobe first to get recommendations
-        </p>
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
+        <h1 style={{ fontFamily: '"Cormorant Garamond", serif', color: COLORS.white, fontSize: '42px', margin: 0 }}>
+          🤖 AI Recommendations
+        </h1>
+        {claudeKey && (
+          <button
+            onClick={() => setShowKeyForm(true)}
+            style={{
+              backgroundColor: COLORS.accent,
+              color: COLORS.primary,
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '13px'
+            }}
+          >
+            🔑 Change API Key
+          </button>
+        )}
+      </div>
+
+      {showKeyForm && (
+        <div style={{
+          background: GRADIENTS.card,
+          padding: '30px',
+          borderRadius: '15px',
+          marginBottom: '40px',
+          boxShadow: SHADOWS.medium,
+          border: `2px solid ${COLORS.accent}`
+        }}>
+          <h3 style={{ color: COLORS.primary, marginTop: 0 }}>🔑 Add Claude API Key</h3>
+          <p style={{ color: COLORS.textLight, fontSize: '14px' }}>
+            Get your free API key from <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.accent, textDecoration: 'none', fontWeight: 'bold' }}>console.anthropic.com</a>
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px' }}>
+            <input
+              type="password"
+              placeholder="sk-ant-..."
+              value={testKey}
+              onChange={(e) => setTestKey(e.target.value)}
+              style={{
+                padding: '12px',
+                borderRadius: '8px',
+                border: `2px solid ${COLORS.accent}`,
+                fontFamily: 'monospace',
+                fontSize: '13px'
+              }}
+            />
+            <button
+              onClick={handleSaveKey}
+              style={{
+                backgroundColor: COLORS.accent,
+                color: COLORS.primary,
+                padding: '12px 30px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
       )}
-      {!styleDNA && (
-        <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>
-          🎯 Take the Style Quiz to unlock AI recommendations
-        </p>
+
+      {!claudeKey && !showKeyForm && (
+        <div style={{
+          background: GRADIENTS.card,
+          padding: '40px',
+          borderRadius: '15px',
+          boxShadow: SHADOWS.medium,
+          textAlign: 'center'
+        }}>
+          <p style={{ color: COLORS.textLight, fontSize: '16px', marginBottom: '20px' }}>
+            Add your Claude API key to unlock AI-powered outfit recommendations
+          </p>
+          <button
+            onClick={() => setShowKeyForm(true)}
+            style={{
+              backgroundColor: COLORS.accent,
+              color: COLORS.primary,
+              padding: '14px 40px',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '16px'
+            }}
+          >
+            🔑 Add API Key
+          </button>
+        </div>
+      )}
+
+      {claudeKey && !showKeyForm && (
+        <>
+          <button
+            onClick={generateRecommendations}
+            disabled={loading || wardrobe.length < 3}
+            style={{
+              width: '100%',
+              backgroundColor: wardrobe.length < 3 ? '#ccc' : COLORS.accent,
+              color: COLORS.primary,
+              padding: '16px',
+              fontSize: '16px',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontFamily: '"Cormorant Garamond", serif',
+              marginBottom: '40px',
+              boxShadow: SHADOWS.medium
+            }}
+          >
+            {loading ? '🤖 Analyzing...' : '✨ Generate AI Recommendations'}
+          </button>
+
+          {wardrobe.length < 3 && (
+            <div style={{
+              background: '#fff3cd',
+              padding: '20px',
+              borderRadius: '10px',
+              marginBottom: '40px',
+              borderLeft: `4px solid ${COLORS.accent}`
+            }}>
+              <p style={{ color: '#856404', margin: 0, fontWeight: 'bold' }}>
+                👗 Add at least 3 items to your wardrobe to generate recommendations
+              </p>
+            </div>
+          )}
+
+          {recommendations.length > 0 && (
+            <div>
+              <h2 style={{ color: COLORS.white, fontSize: '28px', marginBottom: '20px' }}>Your AI Recommendations</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '25px' }}>
+                {recommendations.map((rec, idx) => (
+                  <div
+                    key={rec.id}
+                    style={{
+                      background: GRADIENTS.card,
+                      padding: '25px',
+                      borderRadius: '15px',
+                      boxShadow: SHADOWS.medium,
+                      border: `3px solid ${COLORS.accent}`,
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-8px)';
+                      e.currentTarget.style.boxShadow = SHADOWS.dark;
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = SHADOWS.medium;
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h3 style={{ fontFamily: '"Cormorant Garamond", serif', color: COLORS.primary, margin: 0 }}>
+                        Look #{idx + 1}
+                      </h3>
+                      <div style={{
+                        backgroundColor: COLORS.accent,
+                        color: COLORS.primary,
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '28px',
+                        fontFamily: '"Cormorant Garamond", serif'
+                      }}>
+                        {rec.score}
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                      <h4 style={{ color: COLORS.primary, marginBottom: '8px', fontSize: '13px' }}>👕 Outfit</h4>
+                      <p style={{ color: COLORS.textLight, margin: '5px 0', fontSize: '13px' }}>
+                        Top: <strong>{rec.items[0].name}</strong>
+                      </p>
+                      <p style={{ color: COLORS.textLight, margin: '5px 0', fontSize: '13px' }}>
+                        Bottom: <strong>{rec.items[1].name}</strong>
+                      </p>
+                      <p style={{ color: COLORS.textLight, margin: '5px 0', fontSize: '13px' }}>
+                        Shoes: <strong>{rec.items[2].name}</strong>
+                      </p>
+                    </div>
+
+                    <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: `1px solid ${COLORS.gray}` }}>
+                      <h4 style={{ color: COLORS.primary, marginBottom: '8px', fontSize: '13px' }}>✨ Analysis</h4>
+                      <p style={{ color: COLORS.textLight, margin: 0, fontSize: '13px', lineHeight: '1.6' }}>
+                        {rec.analysis}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 style={{ color: COLORS.primary, marginBottom: '8px', fontSize: '13px' }}>💡 Styling Tip</h4>
+                      <p style={{ color: COLORS.accent, margin: 0, fontSize: '13px', fontWeight: 'bold' }}>
+                        {rec.suggestion}
+                      </p>
+                    </div>
+
+                    {rec.isDemo && (
+                      <div style={{
+                        backgroundColor: '#e8f4f8',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        marginTop: '15px',
+                        fontSize: '12px',
+                        color: '#0066cc',
+                        fontWeight: 'bold'
+                      }}>
+                        💬 Demo mode (add API key for real Claude analysis)
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
