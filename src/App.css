@@ -1,103 +1,327 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --mihova-violet: #8b5cf6;
+  --mihova-lavender: #c4b5fd;
+  --mihova-gold: #d4af6a;
+  --mihova-ink: #120b1d;
+  --mihova-plum: #1b1029;
+  --mihova-card: rgba(255,255,255,.065);
+  --mihova-line: rgba(255,255,255,.12);
+  --mihova-muted: rgba(255,255,255,.68);
 }
+
+* { box-sizing: border-box; }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #2D1B3D 0%, #1a0d2e 100%);
-  color: #1a1a1a;
+  margin: 0;
+  background: var(--mihova-ink);
+  color: #fff;
+  font-family: Inter, system-ui, sans-serif;
 }
 
-#root {
+.mihova-shell {
   min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 8%, rgba(139,92,246,.23), transparent 28rem),
+    radial-gradient(circle at 10% 40%, rgba(212,175,106,.08), transparent 24rem),
+    linear-gradient(135deg, #100919 0%, #1b1029 48%, #0d0814 100%);
 }
 
-/* Navigation Styles */
-nav {
-  box-shadow: 0 8px 24px rgba(45, 27, 61, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-nav button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 8px;
-  font-size: 14px;
-  text-transform: capitalize;
-}
-
-nav button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-}
-
-/* Page Content */
-div[style*="padding: 40px"] {
-  max-width: 1400px;
+.mihova-nav {
+  width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
+  padding: 22px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
-/* Cards */
-.card {
-  background: linear-gradient(135deg, #F5F1F8 0%, #FFFFFF 100%);
-  border-radius: 15px;
-  box-shadow: 0 4px 16px rgba(45, 27, 61, 0.15);
-  transition: all 0.3s ease;
+.mihova-logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  font-size: 15px;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(45, 27, 61, 0.2);
+.mihova-logo-mark {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(212,175,106,.55);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--mihova-gold);
+  box-shadow: 0 0 24px rgba(212,175,106,.12);
 }
 
-/* Buttons */
-button {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
+.mihova-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--mihova-line);
+  background: rgba(255,255,255,.035);
+  backdrop-filter: blur(18px);
+  border-radius: 999px;
+}
+
+.mihova-nav-links button {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.62);
+  padding: 9px 14px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font: inherit;
+  font-size: 12px;
+  transition: .2s ease;
 }
 
-button:hover {
-  transform: scale(1.02);
+.mihova-nav-links button:hover,
+.mihova-nav-links button.active {
+  color: #fff;
+  background: rgba(139,92,246,.22);
 }
 
-button:active {
-  transform: scale(0.98);
+.mihova-hero {
+  width: min(1180px, calc(100% - 40px));
+  min-height: calc(100vh - 80px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  align-items: center;
+  gap: 70px;
+  padding: 60px 0 100px;
 }
 
-/* Inputs */
-input, select, textarea {
-  font-family: 'Inter', sans-serif;
-  border-radius: 8px;
-  border: 2px solid #2D1B3D;
-  padding: 12px 16px;
-  transition: all 0.3s ease;
+.mihova-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--mihova-gold);
+  text-transform: uppercase;
+  letter-spacing: .22em;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 22px;
 }
 
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: #D4AF37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+.mihova-eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--mihova-gold);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+.mihova-title {
+  margin: 0;
+  max-width: 680px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(58px, 7vw, 94px);
+  line-height: .9;
+  font-weight: 600;
+  letter-spacing: -.045em;
 }
 
-::-webkit-scrollbar-track {
-  background: #F5F1F8;
+.mihova-title span {
+  display: block;
+  color: var(--mihova-lavender);
+  font-style: italic;
+  font-weight: 500;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #D4AF37;
-  border-radius: 4px;
+.mihova-copy {
+  max-width: 520px;
+  margin: 26px 0 32px;
+  color: var(--mihova-muted);
+  line-height: 1.8;
+  font-size: 15px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #E5C158;
+.mihova-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mihova-primary {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #6d3fc0);
+  border-radius: 999px;
+  padding: 14px 24px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 40px rgba(109,63,192,.32);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.mihova-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 48px rgba(109,63,192,.44);
+}
+
+.mihova-secondary {
+  border: 1px solid var(--mihova-line);
+  color: #fff;
+  background: rgba(255,255,255,.045);
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mihova-stage {
+  position: relative;
+  min-height: 520px;
+  display: grid;
+  place-items: center;
+}
+
+.mihova-orbit {
+  position: absolute;
+  width: 430px;
+  height: 430px;
+  border: 1px solid rgba(196,181,253,.13);
+  border-radius: 50%;
+  box-shadow: 0 0 100px rgba(139,92,246,.11);
+}
+
+.mihova-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 38px;
+  border: 1px solid rgba(212,175,106,.1);
+  border-radius: 50%;
+}
+
+.mihova-phone {
+  position: relative;
+  width: min(300px, 70vw);
+  height: 560px;
+  border: 7px solid #27202e;
+  border-radius: 42px;
+  padding: 10px;
+  background: #09060d;
+  box-shadow: 0 35px 90px rgba(0,0,0,.55), 0 0 80px rgba(139,92,246,.18);
+  transform: rotate(2deg);
+  z-index: 2;
+}
+
+.mihova-phone-screen {
+  height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 70% 20%, rgba(139,92,246,.42), transparent 13rem),
+    linear-gradient(160deg, #241335, #100918);
+  padding: 24px 18px;
+}
+
+.mihova-phone-brand {
+  font-size: 10px;
+  letter-spacing: .24em;
+  color: rgba(255,255,255,.65);
+}
+
+.mihova-phone-look {
+  margin-top: 22px;
+  height: 310px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.1);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.025));
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mihova-silhouette {
+  width: 65%;
+  height: 88%;
+  border-radius: 48% 48% 15% 15%;
+  background: linear-gradient(160deg, #d8c6ba, #71566e 40%, #2a1d39 75%);
+  filter: saturate(.7);
+}
+
+.mihova-phone-label {
+  margin-top: 17px;
+  color: rgba(255,255,255,.65);
+  font-size: 11px;
+}
+
+.mihova-phone-lookname {
+  margin-top: 4px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 25px;
+}
+
+.mihova-float {
+  position: absolute;
+  z-index: 3;
+  padding: 13px 15px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(25,14,39,.78);
+  backdrop-filter: blur(18px);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.28);
+  font-size: 11px;
+}
+
+.mihova-float strong {
+  display: block;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.mihova-float.one { top: 70px; left: 0; }
+.mihova-float.two { right: 0; bottom: 85px; }
+.mihova-float.three { left: 10px; bottom: 15px; }
+
+.mihova-section {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 80px 0;
+}
+
+.mihova-section-head {
+  max-width: 650px;
+  margin-bottom: 30px;
+}
+
+.mihova-section-head h2 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 52px;
+  font-weight: 600;
+}
+
+.mihova-section-head p {
+  color: var(--mihova-muted);
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .mihova-nav-links { display: none; }
+  .mihova-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-top: 35px;
+  }
+  .mihova-stage { min-height: 560px; }
+}
+
+@media (max-width: 560px) {
+  .mihova-nav { width: min(100% - 24px, 1180px); }
+  .mihova-hero, .mihova-section { width: min(100% - 28px, 1180px); }
+  .mihova-title { font-size: 58px; }
+  .mihova-stage { transform: scale(.88); transform-origin: top center; min-height: 520px; }
+  .mihova-float.one { left: -12px; }
+  .mihova-float.two { right: -8px; }
 }

@@ -1,26 +1,28 @@
-export async function analyzeOutfit(items, apiKey) {
+export async function analyzeOutfit(items) {
+  const apiKey = import.meta.env.VITE_CLAUDE_API_KEY;
+
   if (!apiKey) {
-    return {
-      score: 8,
-      analysis: "Demo analysis: This is a well-balanced outfit combination.",
-      suggestion: "Try adding an accessory to complete the look!",
-      isDemo: true
-    };
+    console.error('Claude API key not found');
+    return null;
   }
 
-  const itemNames = items.map(item => `${item.name} (${item.type})`).join(', ');
-  
-  const prompt = `You are a professional fashion stylist. Analyze this outfit and provide:
-1. A style score (1-10)
-2. Brief analysis (1-2 sentences)
-3. One styling suggestion
+  const itemsList = Object.entries(items)
+    .filter(([_, item]) => item !== null)
+    .map(([type, item]) => `${type}: ${item.name} (color: ${item.color})`)
+    .join('\n');
 
-Outfit: ${itemNames}
+  const prompt = `You are a professional fashion stylist. Analyze this outfit and provide:
+1. A style score from 0-100
+2. Why this combination works (or doesn't)
+3. One specific improvement suggestion
+
+Outfit:
+${itemsList}
 
 Respond in this exact format:
 SCORE: [number]
-ANALYSIS: [text]
-SUGGESTION: [text]`;
+ANALYSIS: [2-3 sentences]
+SUGGESTION: [1 sentence improvement]`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -28,47 +30,41 @@ SUGGESTION: [text]`;
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: 'claude-opus-4-1',
-        max_tokens: 300,
+        max_tokens: 500,
         messages: [
-          { role: 'user', content: prompt }
-        ]
-      })
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      console.error('API Error:', response.status);
-      return {
-        score: 8,
-        analysis: "Demo analysis: Outfit looks great!",
-        suggestion: "Keep exploring different combinations!",
-        isDemo: true
-      };
+      console.error('Claude API error:', data);
+      return null;
     }
 
-    const data = await response.json();
     const text = data.content[0].text;
     
+    // Parse response
     const scoreMatch = text.match(/SCORE:\s*(\d+)/);
-    const analysisMatch = text.match(/ANALYSIS:\s*([^\n]+)/);
-    const suggestionMatch = text.match(/SUGGESTION:\s*([^\n]+)/);
+    const analysisMatch = text.match(/ANALYSIS:\s*(.+?)(?=SUGGESTION:|$)/s);
+    const suggestionMatch = text.match(/SUGGESTION:\s*(.+?)$/s);
 
     return {
-      score: scoreMatch ? parseInt(scoreMatch[1]) : 8,
-      analysis: analysisMatch ? analysisMatch[1].trim() : "Great outfit choice!",
-      suggestion: suggestionMatch ? suggestionMatch[1].trim() : "Perfect look!",
-      isDemo: false
+      score: scoreMatch ? parseInt(scoreMatch[1]) : 75,
+      analysis: analysisMatch ? analysisMatch[1].trim() : 'Great outfit choice!',
+      suggestion: suggestionMatch ? suggestionMatch[1].trim() : 'Consider adding an accessory.',
     };
   } catch (error) {
-    console.error('Error:', error);
-    return {
-      score: 8,
-      analysis: "Demo: Cloud connectivity issue. Using fallback analysis.",
-      suggestion: "Your outfit looks stylish!",
-      isDemo: true
-    };
+    console.error('Error analyzing outfit:', error);
+    return null;
   }
 }
